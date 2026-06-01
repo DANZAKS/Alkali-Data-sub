@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net: default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 100 &&
+             data.email is string && data.email.size() >= 5 && data.email.size() <= 100 &&
+             data.phoneNumber is string && data.phoneNumber.size() >= 7 && data.phoneNumber.size() <= 20 &&
+             data.walletBalance is number && data.walletBalance >= 0 && data.walletBalance <= 5000000 &&
+             data.role is string && (data.role == "user" || data.role == "admin") &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidTransaction(data) {
+      return data.userId is string && data.userId.size() <= 128 &&
+             data.serviceType is string && (
+               data.serviceType == "airtime" || 
+               data.serviceType == "data" || 
+               data.serviceType == "electricity" || 
+               data.serviceType == "tv" || 
+               data.serviceType == "deposit"
+             ) &&
+             data.amount is number && data.amount > 0 && data.amount <= 500000 &&
+             data.details is string && data.details.size() <= 250 &&
+             data.status is string && (data.status == "success" || data.status == "pending" || data.status == "failed") &&
+             data.createdAt is timestamp &&
+             data.reference is string && data.reference.size() <= 100;
+    }
+
+    // Users Collection Rule Matcher
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == "user";
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      request.resource.data.email == resource.data.email &&
+                      request.resource.data.role == resource.data.role &&
+                      request.resource.data.createdAt == resource.data.createdAt &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['walletBalance', 'fullName', 'phoneNumber']);
+      allow delete: if false; // Profiles are lifetime persistent accounts
+    }
+
+    // Transactions Ledger Rule Matcher
+    match /transactions/{transactionId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid && isValidTransaction(request.resource.data);
+      allow update, delete: if false; // All financial transactions are audit-immutable
+    }
+  }
+}

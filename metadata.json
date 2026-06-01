@@ -1,0 +1,6 @@
+{
+  "name": "Alkali Communication & VTU",
+  "description": "Alkali VTU is a premium Nigerian digital wallet and Virtual Top-Up web application providing instant Airtime, Data, TV subscriptions, and Electricity bill payments.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

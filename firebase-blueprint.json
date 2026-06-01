@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and wallet balance details.",
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "type": "string",
+          "description": "The user's full name"
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's mobile phone number"
+        },
+        "walletBalance": {
+          "type": "number",
+          "description": "Current wallet balance in Nigerian Naira (₦)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the profile was created"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["user", "admin"],
+          "description": "Assigns user privilege status"
+        }
+      },
+      "required": ["fullName", "email", "phoneNumber", "walletBalance", "createdAt", "role"]
+    },
+    "Transaction": {
+      "title": "Transaction Log",
+      "description": "A ledger record of a wallet top-up, airtime, data, TV, or electricity purchase.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The unique reference to the logged-in User"
+        },
+        "serviceType": {
+          "type": "string",
+          "enum": ["airtime", "data", "electricity", "tv", "deposit"],
+          "description": "The type of service executed"
+        },
+        "network": {
+          "type": "string",
+          "description": "Selected telecommunications network, if applicable"
+        },
+        "recipient": {
+          "type": "string",
+          "description": "Destination phone number, meter number, or decoder ID"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The payment value of the transaction"
+        },
+        "details": {
+          "type": "string",
+          "description": "Human-readable description of the payment action"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["success", "pending", "failed"],
+          "description": "The current resolution state of the service"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The exact time the transaction occurred"
+        },
+        "reference": {
+          "type": "string",
+          "description": "Unique alphanumeric reference code for tracking"
+        }
+      },
+      "required": ["userId", "serviceType", "amount", "details", "status", "createdAt", "reference"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Enables creation and retrieval of user-specific profile structures."
+    },
+    "transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Maintains an active historic ledger of all virtual payment activities."
+    }
+  }
+}
